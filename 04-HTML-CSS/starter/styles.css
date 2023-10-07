@@ -1,0 +1,36 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: lemonchiffon;
+  padding: 20px;
+}
+
+h1 {
+  margin-bottom: 20px;
+}
+
+h2 {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+p {
+  margin-bottom: 20px;
+}
+
+#your-name {
+  background-color: lightgrey;
+  border: 5px solid darkslategray;
+  padding: 10px;
+  margin-top: 20px;
+}
+
+input,
+button {
+  font-size: 15px;
+  padding: 5px;
+}
