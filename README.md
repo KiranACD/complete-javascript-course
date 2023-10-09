@@ -212,7 +212,205 @@ Hoisting makes some types of variables accessible in the code before they are ac
 | var variables         | Yes      | undefined                        | Function                                 |
 | let and const         | No       | uninitialzed, temporal dead zone | Block                                    |
 
-In case of function expressions and arrow functions, it depends on if they are created using var or let/const.
+In case of function expressions and arrow functions, it depends on if they are created using var or let/const. It follows the behaviour of the variables declared using them.
+
+Consider this piece of code
+
+```
+const myName = 'Jonas';
+if (myName === 'Jonas') {
+    console.log(`Jonas is a ${job}`);
+    const age = 2037 - 1989;
+    console.log(age);
+    const job = 'teacher';
+}
+```
+
+The first console.log will result in a reference error, because job is in a temporal dead zone and we cannot access it before initialization as it has been declared using const.
+
+Temporal dead zone was introduced in ES6. Why do we need this?
+
+1. It makes it easy to avoid and catch errors. Accessing variables before declaration is bad practice ans should be avoided.
+2. It makes const variables actually work.
+
+Why does hoisting exist in javascript? This is to be able to use function declarations before we use them. Hoisting of variables that are declared using var is just a byproduct of the above use-case.
+
+A variable declared using var is put into the window object as a property unlike variables declared using let and const.
+
+### this keyword
+
+It is special variable that is created for every execution context (every function). It takes the value of the owner of the function in which the this keyword is used. It points to the owner of the function. The value of this keyword is not static. It depends on how the function is called and its value is only assigned when the function is actually called.
+
+What are the different ways in which function is called?
+
+1. An object calling its method. Here 'this' is the object that is calling the method.
+
+2. For a function that is not attached to any object, 'this' keyword is undefined when we use the strict mode. In non-strict mode, 'this' keyword points to the window object.
+
+3. In case of arrow function, 'this' keyword points to whatever the outer lexical 'this' is pointing to.
+
+4. In case of an eventlistener, 'this' points to the DOM element the handler is attached to.
+
+5. How the 'this' keyword works with other ways of calling functions like using new, call, apply, bind.
+
+The 'this' keyword will never point to the function itself and also not to the functions variable environment.
+
+```
+const jonas = {
+    year: 1991,
+    calcAge: function () {
+        console.log(2037-this.year);
+    }
+};
+
+const matilda = {
+    year: 2017,
+};
+
+matilda.calcAge = jonas.calcAge;
+matilda.calcAge(); // 20
+```
+
+The above example shows that the 'this' keyword points to the object calling the method.
+
+```
+const f = jonas.calcAge();
+f(); // error because 'this' is now undefined
+```
+
+```
+const jonas = {
+    firstName: 'Jonas',
+    year: 1991,
+    calcAge: function () {
+        console.log(2037 - this.year);
+    },
+    greet: () => console.log(`Hey ${this.firstName}`),
+};
+jonas.greet(); //Hey undefined
+```
+
+The parent scope of greet arrow function is the global scope.
+
+```
+var firstName = 'Matilda';
+const jonas = {
+    firstName: 'Jonas',
+    year: 1991,
+    calcAge: function () {
+        console.log(2037 - this.year);
+    },
+    greet: () => console.log(`Hey ${this.firstName}`),
+};
+jonas.greet(); //Hey Matilda
+```
+
+This is because firstName in the global scope is declared using var and this attaches the firstName to the window object. The 'this' keyword points to the global window object and hence when we call jonas.greet(), it prints "Hey Matilda". Avoid using var to declare variables and avoid using arrow function as methods in objects.
+
+```
+const jonas = {
+    firstName: 'Jonas',
+    year: 1991,
+    calcAge: function () {
+        console.log(2037 - this.year);
+
+        const isMillenial = function () {
+            console.log(this.year >= 1981 && this.year <= 1996);
+        }
+        isMillenial(); // error because this is undefined
+    },
+    greet: () => console.log(`Hey ${this.firstName}`),
+};
+```
+
+The isMillenial function call will raise an error because the 'this' keyword in the isMillenial function will point to undefined, because it is a regular function declaration. We can solve this issue by declaring a variable outside the isMillenial function and assigning it the 'this' keyword of the object.
+
+```
+const jonas = {
+    firstName: 'Jonas',
+    year: 1991,
+    calcAge: function () {
+        console.log(2037 - this.year);
+
+        const self = this;
+        const isMillenial = function () {
+            console.log(self.year >= 1981 && self.year <= 1996);
+        }
+        isMillenial(); // true
+    },
+    greet: () => console.log(`Hey ${this.firstName}`),
+};
+```
+
+Another solution is to use an arrow function. The arrow function will inherit the 'this' keyword from the parent scope.
+
+```
+const jonas = {
+    firstName: 'Jonas',
+    year: 1991,
+    calcAge: function () {
+        console.log(2037 - this.year);
+
+        const isMillenial = () => console.log(this.year >= 1981 && this.year <= 1996);
+        isMillenial(); // true
+    },
+    greet: () => console.log(`Hey ${this.firstName}`),
+};
+```
+
+### Arguments Keyword
+
+All functions have access to an arguments object that collects all the arguments passed to a function and stores them in an array. It does not exist for the arrow function.
+
+## Primitives vs Objects
+
+Primitives
+
+1. Number
+2. String
+3. Boolean
+4. Undefined
+5. Null
+6. Symbol
+7. BigInt
+
+These are called primitive types.
+
+Objects
+
+1. Object literal
+2. Arrays
+3. Functions
+4. Others
+
+These are called reference types.
+
+All the objects are stored in the memory heap. Primitive types are stored in the call stack because that is where execution contexts are stored.
+
+```
+let age = 30;
+let oldAge = age;
+age = 31;
+console.log(age); // 31
+console.log(oldAge); // 30
+
+const me = {
+    name: 'Jonas',
+    age: 30,
+};
+const friend = me;
+friend.age = 27;
+console.log('Friend: ', friend); // {name: 'Jonas', age: 27}
+console.log('Me: ', me); // {name: 'Jonas', age: 27}
+```
+
+When we declare a primitive variable, in this case age, a unique identifier is created and memory is allocated to it. The value assigned to the variable is stored in the memory address. The identifier points to the memory address. When we declare another variable oldAge and assign the variable age to it, oldAge points to the same memory address as the variable age. When we assign a new value to age, a new memory address is created with a new value in the address and now the age identifier points to the new memory address.
+
+When a new object, in this case me, is created, memory is allocated in the heap. In the call stack an identifier is created and a memory is allocated. The value in the memory is the reference address of the object in the heap. When another object, friend, is created and assigned the me object, it will point to the same address in the call stack as the me object. So when we change a property of the object from me or friend, the value of the property will be changed for both objects.
+
+To copy objects so that they dont point to the same address, we can use Object.assign().
+
+`const objectCopy = Object.assign({}, object)`
 
 ## DOM
 
